@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ItemSelectableAttrs">
+        <attr name="onDefaultStateStrokeColor" format="color" />
+        <attr name="onDefaultStateBackgroundColor" format="color" />
+        <attr name="onSelectedStateStrokeColor" format="color" />
+        <attr name="onSelectedStateBackgroundColor" format="color" />
+
+        <attr name="itemSelectableStrokeWidth" format="dimension" />
+        <attr name="itemSelectableBorderRadius" format="dimension" />
+    </declare-styleable>
+</resources>
