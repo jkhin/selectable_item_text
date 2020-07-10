@@ -36,25 +36,14 @@ class ItemSelectable @JvmOverloads constructor(
     private var onDefaultStateBackgroundColor: Int = Int.MIN_VALUE
     private var onSelectedStateBackgroundColor: Int = Int.MIN_VALUE
 
-    private val shape by lazy { GradientDrawable() }
-
-    private val strokePaint by lazy { Paint() }
-    private val shapePaint by lazy { Paint() }
-
-    private val borderPath by lazy { Path() }
-    private val fillPath by lazy { Path() }
-
-    private val rect by lazy { RectF() }
-    private val innerRect by lazy { RectF() }
-
     private var cornerRadiiArray = floatArrayOf()
 
+    private val shape by lazy { GradientDrawable() }
 
     private val handler by lazy { ItemSelectableEventHandler(this) }
 
     init {
         initAttrs()
-        initInternals()
         initBehaviourState()
         initEvents()
     }
@@ -98,26 +87,7 @@ class ItemSelectable @JvmOverloads constructor(
         typedArray.recycle()
     }
 
-    private fun initInternals() {
-        strokePaint.apply {
-            color = onDefaultStateStrokeColor
-            style = Paint.Style.FILL
-            isAntiAlias = true
-            isDither = true
-        }
-
-        shapePaint.apply {
-            color = onDefaultStateBackgroundColor
-            style = Paint.Style.FILL
-            isAntiAlias = true
-            isDither = true
-        }
-
-
-    }
-
     private fun initBehaviourState() {
-
         setAsDefault()
     }
 
@@ -125,44 +95,21 @@ class ItemSelectable @JvmOverloads constructor(
         handler.onExecutedEvent()
     }
 
-    private fun setShapeColor(color: Int) {
-        shapePaint.color = color
-    }
-
-    private fun setStrokeColor(color: Int) {
-        strokePaint.color = color
-    }
-
     private fun setStrokeWidthValue(dp: Float) {
         val scale = context.resources.displayMetrics.density
         strokeWidth = dp * scale
     }
 
-    private fun setAsDefault() {
-        setShapeColor(onDefaultStateBackgroundColor)
-        setStrokeColor(onDefaultStateStrokeColor)
+    private fun setAsDefault() =
         shape.changeColorState(onDefaultStateStrokeColor, onDefaultStateBackgroundColor)
 
-    }
-
-    private fun setAsSelected() {
+    private fun setAsSelected() =
         shape.changeColorState(onSelectedStateStrokeColor, onSelectedStateBackgroundColor)
 
-        setShapeColor(onSelectedStateBackgroundColor)
-        setStrokeColor(onSelectedStateStrokeColor)
-    }
 
-    fun isItemSelected() = handler.isItemSelected()
+    override fun onSelectedState() = setAsSelected()
 
-    override fun onSelectedState() {
-        Toast.makeText(context, handler.isItemSelected().toString(), Toast.LENGTH_SHORT).show()
-        setAsSelected()
-    }
-
-    override fun onDefaultState() {
-        Toast.makeText(context, handler.isItemSelected().toString(), Toast.LENGTH_SHORT).show()
-        setAsDefault()
-    }
+    override fun onDefaultState() = setAsDefault()
 
     private fun GradientDrawable.changeColorState(borderColor: Int, bgColor: Int) = with(this) {
         shape = GradientDrawable.RECTANGLE
@@ -173,36 +120,6 @@ class ItemSelectable @JvmOverloads constructor(
         background = this
     }
 
-    /*
-        override fun onDraw(canvas: Canvas?) {
-            drawCanvasPath(canvas)
-            super.onDraw(canvas)
-        }
-    */
-    private fun drawCanvasPath(canvas: Canvas?) {
-        canvas?.apply {
-            rect.let {
-                it.set(0F, 0f, measuredWidth.toFloat(), measuredHeight.toFloat())
-
-                borderPath.addRoundRect(it, borderRadius, borderRadius, Path.Direction.CW)
-
-                innerRect.set(it)
-            }
-
-            innerRect.let {
-                it.inset(strokeWidth, strokeWidth)
-
-                if (it.width() > 0 && it.height() > 0)
-                    borderPath.addRoundRect(it, borderRadius, borderRadius, Path.Direction.CW)
-            }
-
-            borderPath.fillType = Path.FillType.EVEN_ODD
-
-            fillPath.addRoundRect(rect, borderRadius, borderRadius, Path.Direction.CW)
-
-            drawPath(fillPath, shapePaint)
-            drawPath(borderPath, strokePaint)
-        }
-    }
+    fun isItemSelected() = handler.isItemSelected()
 
 }
