@@ -2,7 +2,6 @@ package my.own.project.example.selector_item_component.component.item
 
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.widget.Toast
 import com.google.android.material.textview.MaterialTextView
@@ -22,13 +21,6 @@ class ItemSelectable @JvmOverloads constructor(
         }
 
     private var borderRadius: Float = Float.MIN_VALUE
-        set(value) {
-            if (field == Float.MIN_VALUE) {
-                field = value
-                cornerRadiiArray =
-                    floatArrayOf(value, value, value, value, value, value, value, value)
-            }
-        }
 
     private var onDefaultStateStrokeColor: Int = Int.MIN_VALUE
     private var onSelectedStateStrokeColor: Int = Int.MIN_VALUE
@@ -36,14 +28,20 @@ class ItemSelectable @JvmOverloads constructor(
     private var onDefaultStateBackgroundColor: Int = Int.MIN_VALUE
     private var onSelectedStateBackgroundColor: Int = Int.MIN_VALUE
 
-    private var cornerRadiiArray = floatArrayOf()
+    private val strokePaint by lazy { Paint() }
+    private val shapePaint by lazy { Paint() }
 
-    private val shape by lazy { GradientDrawable() }
+    private val borderPath by lazy { Path() }
+    private val fillPath by lazy { Path() }
+
+    private val rect by lazy { RectF() }
+    private val innerRect by lazy { RectF() }
 
     private val handler by lazy { ItemSelectableEventHandler(this) }
 
     init {
         initAttrs()
+        initInternals()
         initBehaviourState()
         initEvents()
     }
@@ -87,6 +85,22 @@ class ItemSelectable @JvmOverloads constructor(
         typedArray.recycle()
     }
 
+    private fun initInternals() {
+        strokePaint.apply {
+            color = onDefaultStateStrokeColor
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            isDither = true
+        }
+
+        shapePaint.apply {
+            color = onDefaultStateBackgroundColor
+            style = Paint.Style.FILL
+            isAntiAlias = true
+            isDither = true
+        }
+    }
+
     private fun initBehaviourState() {
         setAsDefault()
     }
@@ -95,31 +109,66 @@ class ItemSelectable @JvmOverloads constructor(
         handler.onExecutedEvent()
     }
 
+    private fun setShapeColor(color: Int) {
+        shapePaint.color = color
+    }
+
+    private fun setStrokeColor(color: Int) {
+        strokePaint.color = color
+    }
+
     private fun setStrokeWidthValue(dp: Float) {
         val scale = context.resources.displayMetrics.density
         strokeWidth = dp * scale
     }
 
-    private fun setAsDefault() =
-        shape.changeColorState(onDefaultStateStrokeColor, onDefaultStateBackgroundColor)
+    private fun setAsDefault() {
+        setShapeColor(onDefaultStateBackgroundColor)
+        setStrokeColor(onDefaultStateStrokeColor)
+        invalidate()
+    }
 
-    private fun setAsSelected() =
-        shape.changeColorState(onSelectedStateStrokeColor, onSelectedStateBackgroundColor)
+    private fun setAsSelected() {
+        setShapeColor(onSelectedStateBackgroundColor)
+        setStrokeColor(onSelectedStateStrokeColor)
+        invalidate()
+    }
 
+    fun isItemSelected() = handler.isItemSelected()
 
     override fun onSelectedState() = setAsSelected()
 
     override fun onDefaultState() = setAsDefault()
 
-    private fun GradientDrawable.changeColorState(borderColor: Int, bgColor: Int) = with(this) {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadii = cornerRadiiArray
-        setColor(bgColor)
-        setStroke(strokeWidth.toInt(), borderColor)
-
-        background = this
+    override fun onDraw(canvas: Canvas?) {
+        drawCanvasPath(canvas)
+        super.onDraw(canvas)
     }
 
-    fun isItemSelected() = handler.isItemSelected()
+    private fun drawCanvasPath(canvas: Canvas?) {
+        canvas?.apply {
+            rect.let {
+                it.set(0F, 0f, measuredWidth.toFloat(), measuredHeight.toFloat())
+
+                borderPath.addRoundRect(it, borderRadius, borderRadius, Path.Direction.CW)
+
+                innerRect.set(it)
+            }
+
+            innerRect.let {
+                it.inset(strokeWidth, strokeWidth)
+
+                if (it.width() > 0 && it.height() > 0)
+                    borderPath.addRoundRect(it, borderRadius, borderRadius, Path.Direction.CW)
+            }
+
+            borderPath.fillType = Path.FillType.EVEN_ODD
+
+            fillPath.addRoundRect(rect, borderRadius, borderRadius, Path.Direction.CW)
+
+            drawPath(fillPath, shapePaint)
+            drawPath(borderPath, strokePaint)
+        }
+    }
 
 }

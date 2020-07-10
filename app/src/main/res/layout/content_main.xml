@@ -16,7 +16,7 @@
         app:onDefaultStateBackgroundColor="@color/colorWhite"
         app:onSelectedStateBackgroundColor="@color/colorPrimary"
 
-        app:onSelectedStateStrokeColor="@color/colorWhite"
+        app:onSelectedStateStrokeColor="@color/colorAccent"
         app:onDefaultStateStrokeColor="@color/colorPrimary"
 
         app:itemSelectableStrokeWidth="2dp"
